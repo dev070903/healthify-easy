@@ -14,9 +14,9 @@ const CtaSection = () => {
             Join thousands of patients who have simplified their healthcare experience with MediQuick. Your health journey is just a click away.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link to="/signup">
+            <Link to="/appointment">
               <Button size="lg" className="bg-brand-600 hover:bg-brand-700">
-                Get Started
+                Book Appointment
               </Button>
             </Link>
             <Link to="/doctors">
