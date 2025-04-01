@@ -1,8 +1,11 @@
 
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
+import DoctorBookingModal from "./DoctorBookingModal";
+import BookingHistoryModal from "./BookingHistoryModal";
 
 const doctors = [
   {
@@ -38,8 +41,49 @@ const doctors = [
 ];
 
 const DoctorsSection = () => {
+  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+  const [consultationType, setConsultationType] = useState<"in-person" | "video">("in-person");
+
+  const handleBookClick = (doctor: any) => {
+    setSelectedDoctor(doctor);
+    setConsultationType("in-person");
+    setShowBookingModal(true);
+  };
+
+  const handleConsultClick = (doctor: any) => {
+    setSelectedDoctor(doctor);
+    setConsultationType("video");
+    setShowBookingModal(true);
+  };
+
+  const handleBookingSuccess = () => {
+    // If a booking was successful and we have the user's email, show their history
+    if (userEmail) {
+      setShowHistoryModal(true);
+    }
+  };
+
   return (
     <section className="py-20 bg-slate-50">
+      {/* Doctor booking modal */}
+      <DoctorBookingModal 
+        doctor={selectedDoctor} 
+        isOpen={showBookingModal} 
+        onClose={() => setShowBookingModal(false)}
+        type={consultationType}
+        onBookingSuccess={handleBookingSuccess}
+      />
+
+      {/* Booking history modal */}
+      <BookingHistoryModal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        userEmail={userEmail}
+      />
+
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
           <div className="max-w-2xl">
@@ -94,6 +138,7 @@ const DoctorsSection = () => {
                     <Button 
                       variant="default" 
                       className="bg-brand-600 hover:bg-brand-700 w-full flex items-center justify-center gap-2"
+                      onClick={() => handleBookClick(doctor)}
                     >
                       <Calendar className="h-4 w-4" />
                       Book
@@ -101,6 +146,7 @@ const DoctorsSection = () => {
                     <Button 
                       variant="outline" 
                       className="border-brand-200 text-brand-700 hover:bg-brand-50 w-full flex items-center justify-center gap-2"
+                      onClick={() => handleConsultClick(doctor)}
                     >
                       <Phone className="h-4 w-4" />
                       Consult

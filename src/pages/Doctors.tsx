@@ -3,10 +3,11 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Phone, Search, List } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Calendar, Phone, Search, ListChecks } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import DoctorBookingModal from "@/components/DoctorBookingModal";
+import BookingHistoryModal from "@/components/BookingHistoryModal";
 
 // Sample doctors data
 const doctorsData = [
@@ -87,6 +88,10 @@ const specialties = [
 const Doctors = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("All Specialties");
+  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
 
   const filteredDoctors = doctorsData.filter((doctor) => {
     const matchesSearch = doctor.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -96,11 +101,50 @@ const Doctors = () => {
     return matchesSearch && matchesSpecialty;
   });
 
+  const handleBookClick = (doctor: any) => {
+    setSelectedDoctor(doctor);
+    setShowBookingModal(true);
+  };
+
+  const handleConsultClick = (doctor: any) => {
+    setSelectedDoctor(doctor);
+    setShowBookingModal(true);
+  };
+
+  const handleShowHistory = () => {
+    // Prompt for email to see appointments
+    const email = prompt("Please enter your email address to view your appointments:");
+    if (email) {
+      setUserEmail(email);
+      setShowHistoryModal(true);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
       <main className="flex-grow pt-16">
+        {/* Doctor booking modal */}
+        <DoctorBookingModal 
+          doctor={selectedDoctor} 
+          isOpen={showBookingModal} 
+          onClose={() => setShowBookingModal(false)}
+          type={selectedDoctor?.specialty === "Psychologist" ? "video" : "in-person"}
+          onBookingSuccess={() => {
+            if (userEmail) {
+              setShowHistoryModal(true);
+            }
+          }}
+        />
+
+        {/* Booking history modal */}
+        <BookingHistoryModal
+          isOpen={showHistoryModal}
+          onClose={() => setShowHistoryModal(false)}
+          userEmail={userEmail}
+        />
+        
         {/* Hero section */}
         <div className="bg-brand-50 py-16">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -108,9 +152,20 @@ const Doctors = () => {
               <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
                 Find the Right Doctor for Your Health Needs
               </h1>
-              <p className="text-lg text-slate-600 mb-8">
+              <p className="text-lg text-slate-600 mb-6">
                 Book in-person or online video consultations with verified doctors
               </p>
+              
+              <div className="flex justify-center mb-8">
+                <Button
+                  onClick={handleShowHistory}
+                  variant="outline"
+                  className="flex items-center gap-2 border-brand-600 text-brand-700 hover:bg-brand-50"
+                >
+                  <ListChecks className="h-4 w-4" />
+                  View Your Appointments
+                </Button>
+              </div>
               
               <div className="bg-white p-4 rounded-xl shadow-sm">
                 <div className="relative">
@@ -200,6 +255,7 @@ const Doctors = () => {
                         <Button 
                           variant="default" 
                           className="bg-brand-600 hover:bg-brand-700 w-full flex items-center justify-center gap-2"
+                          onClick={() => handleBookClick(doctor)}
                         >
                           <Calendar className="h-4 w-4" />
                           Book
@@ -207,6 +263,7 @@ const Doctors = () => {
                         <Button 
                           variant="outline" 
                           className="border-brand-200 text-brand-700 hover:bg-brand-50 w-full flex items-center justify-center gap-2"
+                          onClick={() => handleConsultClick(doctor)}
                         >
                           <Phone className="h-4 w-4" />
                           Consult

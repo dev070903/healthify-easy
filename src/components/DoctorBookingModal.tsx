@@ -4,8 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
 import { Calendar, Clock } from "lucide-react";
+import { useBookingService } from "./BasicBookingService";
 
 export interface Doctor {
   id: number;
@@ -25,20 +25,19 @@ interface DoctorBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   type?: "in-person" | "video";
+  onBookingSuccess?: () => void;
 }
 
-const DoctorBookingModal = ({ doctor, isOpen, onClose, type = "in-person" }: DoctorBookingModalProps) => {
-  const { toast } = useToast();
+const DoctorBookingModal = ({ doctor, isOpen, onClose, type = "in-person", onBookingSuccess }: DoctorBookingModalProps) => {
+  const { createBooking, isLoading } = useBookingService();
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
     email: "",
     date: "",
-    time: "",
     reason: "",
   });
   const [timeSlot, setTimeSlot] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -53,36 +52,36 @@ const DoctorBookingModal = ({ doctor, isOpen, onClose, type = "in-person" }: Doc
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     
-    try {
-      // Simulate API call to book appointment
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Appointment Booked Successfully!",
-        description: `Your appointment with ${doctor?.name} has been confirmed for ${formData.date} at ${timeSlot}.`,
-        variant: "default",
-      });
-      
+    if (!doctor) return;
+    
+    const bookingData = {
+      doctorId: doctor.id,
+      doctorName: doctor.name,
+      patientName: formData.name,
+      patientEmail: formData.email,
+      patientPhone: formData.phone,
+      appointmentDate: formData.date,
+      appointmentTime: timeSlot,
+      appointmentType: type,
+      reason: formData.reason,
+    };
+    
+    const result = await createBooking(bookingData);
+    
+    if (result) {
       setFormData({
         name: "",
         phone: "",
         email: "",
         date: "",
-        time: "",
         reason: "",
       });
       setTimeSlot("");
       onClose();
-    } catch (error) {
-      toast({
-        title: "Booking Failed",
-        description: "There was an error booking your appointment. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+      if (onBookingSuccess) {
+        onBookingSuccess();
+      }
     }
   };
 
@@ -226,9 +225,9 @@ const DoctorBookingModal = ({ doctor, isOpen, onClose, type = "in-person" }: Doc
             <Button 
               type="submit" 
               className="bg-brand-600 hover:bg-brand-700"
-              disabled={!timeSlot || isSubmitting}
+              disabled={!timeSlot || isLoading}
             >
-              {isSubmitting ? "Booking..." : "Confirm Booking"}
+              {isLoading ? "Booking..." : "Confirm Booking"}
             </Button>
           </DialogFooter>
         </form>
